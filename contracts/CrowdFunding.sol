@@ -46,5 +46,18 @@ contract CrowdFunding{
         if(campaign.received>=campaign.target){
             campaign.completed = true;
         }
+    }
+
+     function updateCampaign(uint index,string memory _title, string memory _description, string memory _imageUrl, uint _target, string memory _deadline) public {
+        require(index<campaigns.length,"Invalid campaign index");
+        Campaign storage campaign = campaigns[index];
+        campaign.title = _title;
+        campaign.description = _description;
+        campaign.imageUrl = _imageUrl;
+        campaign.deadline = _deadline;
+        campaign.target = _target;
+        if(campaign.received>=campaign.target){
+            campaign.completed = true;
+        }
     } 
 }
