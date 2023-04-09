@@ -1,6 +1,23 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.9;
 
+contract DonorHistory{
+    struct History{
+        uint amount;
+        uint campaignId;
+    }
+    mapping(address=>History[]) public donorHistory;
+    function addToHistory(uint _amount,uint _campaignId, address _donor) public payable {
+        donorHistory[_donor].push(History({
+            amount:_amount,
+            campaignId:_campaignId
+        }));
+    }
+    function getDonorHistory(address _donor) public view returns(History[] memory){
+        return donorHistory[_donor];
+    }
+}
+
 contract CrowdFunding{
     struct Campaign{
         address payable receipientAddress;
@@ -14,7 +31,11 @@ contract CrowdFunding{
         bool completed;
     }
     Campaign[] public campaigns;
+    DonorHistory public donorHistory;
     uint public numberOfCampaigns = 0;
+    constructor(){
+        donorHistory = new DonorHistory();
+    }
     function addCampaigns(string memory _title, string memory _description, string memory _imageUrl, uint _target, string memory _deadline ) public {
         require(_target > 0,"Target amount must not be zero");
         campaigns.push(Campaign({
@@ -46,6 +67,9 @@ contract CrowdFunding{
         if(campaign.received>=campaign.target){
             campaign.completed = true;
         }
+    }
+      function getDonorDonationHistory(address _address) public view returns (DonorHistory.History[] memory) {
+        return donorHistory.getDonorHistory(_address);
     }
 
      function updateCampaign(uint index,string memory _title, string memory _description, string memory _imageUrl, uint _target, string memory _deadline) public {
