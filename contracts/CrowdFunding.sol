@@ -64,6 +64,7 @@ contract CrowdFunding{
         require(!campaign.completed,"Campaign completed");
         campaign.receipientAddress.transfer(msg.value);
         campaign.received = campaign.received + msg.value; 
+        donorHistory.addToHistory(msg.value,index,msg.sender);
         if(campaign.received>=campaign.target){
             campaign.completed = true;
         }
