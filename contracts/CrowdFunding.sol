@@ -84,5 +84,8 @@ contract CrowdFunding{
         if(campaign.received>=campaign.target){
             campaign.completed = true;
         }
+        else{
+            campaign.completed = false;
+        }
     } 
 }
