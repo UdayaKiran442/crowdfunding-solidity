@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: UNLICENSED
-pragma solidity ^0.8.9;
+pragma solidity ^0.8.19;
 
 contract DonorHistory{
     struct History{
@@ -18,6 +18,23 @@ contract DonorHistory{
     }
 }
 
+contract CampaignDonors {
+    struct CampaignDonor{
+        address donor;
+        uint amount;
+    }
+    mapping(uint=>CampaignDonor[]) public campaignDonor;
+    function addDonorToCampaign(uint _id, uint _value, address _donor) public {
+        campaignDonor[_id].push(CampaignDonor({
+            amount:_value,
+            donor:_donor
+        }));
+    } 
+    function getCampaignDonors(uint _id) public view returns(CampaignDonor[] memory){
+        return campaignDonor[_id];
+    }
+} 
+
 contract CrowdFunding{
     struct Campaign{
         address payable receipientAddress;
@@ -32,10 +49,12 @@ contract CrowdFunding{
     }
     Campaign[] public campaigns;
     DonorHistory public donorHistory;
-    uint public numberOfCampaigns = 0;
+    CampaignDonors public campaignDonorsList;
     constructor(){
         donorHistory = new DonorHistory();
+        campaignDonorsList = new CampaignDonors();
     }
+    uint public numberOfCampaigns = 0;
     function addCampaigns(string memory _title, string memory _description, string memory _imageUrl, uint _target, string memory _deadline ) public {
         require(_target > 0,"Target amount must not be zero");
         campaigns.push(Campaign({
@@ -51,6 +70,12 @@ contract CrowdFunding{
         }));
         numberOfCampaigns++;
     }
+    function getDonorDonationHistory(address _address) public view returns (DonorHistory.History[] memory) {
+        return donorHistory.getDonorHistory(_address);
+    }
+    function getCampaignDonorsList(uint _id) public view returns(CampaignDonors.CampaignDonor[] memory) {
+        return campaignDonorsList.getCampaignDonors(_id);
+    }
     function getCampaigns() public view returns(Campaign[] memory){
         return campaigns;
     } 
@@ -58,22 +83,20 @@ contract CrowdFunding{
         Campaign memory campaign = campaigns[index];
         return campaign;
     }
+
     function donateToCampaign(uint index) public payable {
         require(index < campaigns.length, "Invalid campaign index");
         Campaign storage campaign = campaigns[index];
         require(!campaign.completed,"Campaign completed");
         campaign.receipientAddress.transfer(msg.value);
-        campaign.received = campaign.received + msg.value; 
+        campaign.received = campaign.received + msg.value;
         donorHistory.addToHistory(msg.value,index,msg.sender);
+        campaignDonorsList.addDonorToCampaign(index,msg.value,msg.sender);
         if(campaign.received>=campaign.target){
             campaign.completed = true;
         }
-    }
-      function getDonorDonationHistory(address _address) public view returns (DonorHistory.History[] memory) {
-        return donorHistory.getDonorHistory(_address);
-    }
-
-     function updateCampaign(uint index,string memory _title, string memory _description, string memory _imageUrl, uint _target, string memory _deadline) public {
+    } 
+    function updateCampaign(uint index,string memory _title, string memory _description, string memory _imageUrl, uint _target, string memory _deadline) public {
         require(index<campaigns.length,"Invalid campaign index");
         Campaign storage campaign = campaigns[index];
         campaign.title = _title;
@@ -87,5 +110,5 @@ contract CrowdFunding{
         else{
             campaign.completed = false;
         }
-    } 
+    }
 }
